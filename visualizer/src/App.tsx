@@ -31,14 +31,18 @@ export default function App() {
     (connection) => setEdges((edges) => addEdge(connection, edges)),
     [setEdges]
   );
+  const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
   useEffect(() => {
     const updateNodesFromJson = async () => {
       try {
         const fetchedNodes = await loadJsonAsDict();
-        console.log(fetchedNodes['data']);
+        const populatedNodes = [];
+        for (const node in fetchedNodes['ios']['blocks']) {
+          populatedNodes.push({ id: node, data: { label: node }, position: center });
+        }
         // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
-        setNodes(fetchedNodes['data']);
+        setNodes(populatedNodes);
       } catch (error) {
         console.error("Failed to fetch nodes:", error);
       }
