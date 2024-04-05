@@ -32,6 +32,21 @@ const NodeAsHandleFlow = () => {
     [setEdges]
   );
 
+  useEffect(() => {
+    const updateNodesFromJson = async () => {
+      try {
+        const fetchedNodes = await loadJsonAsDict();
+        console.log(fetchedNodes['data']);
+        // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
+        setNodes(fetchedNodes['data']);
+      } catch (error) {
+        console.error("Failed to fetch nodes:", error);
+      }
+    };
+
+    updateNodesFromJson();
+  }, []); // Empty dependency array means this effect runs once on mount
+
   return (
     <div className="floatingedges">
       <ReactFlow
