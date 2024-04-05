@@ -1,12 +1,16 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+.floatingedges {
+  flex-direction: column;
+  display: flex;
+  flex-grow: 1;
+  height: 100%;
 }
 
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
+.floatingedges .react-flow__handle {
+  opacity: 0;
+}
+.reactflow-container {
+  width: 100%; /* or any specific width */
+  height: 500px; /* or any specific height */
+  /* Ensure the container is not hidden */
+  display: block;
 }
