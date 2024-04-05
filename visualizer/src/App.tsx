@@ -1,43 +1,53 @@
-import type { OnConnect } from "reactflow";
-
-import { useCallback } from "react";
-import {
-  Background,
-  Controls,
-  MiniMap,
-  ReactFlow,
+import React, { useCallback } from 'react';
+import ReactFlow, {
   addEdge,
+  Background,
   useNodesState,
   useEdgesState,
-} from "reactflow";
+  MarkerType,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 
-import "reactflow/dist/style.css";
+import FloatingEdge from './FloatingEdge.js';
+import FloatingConnectionLine from './FloatingConnectionLine.js';
+import { createNodesAndEdges } from './utils.js';
 
-import { initialNodes, nodeTypes } from "./nodes";
-import { initialEdges, edgeTypes } from "./edges";
+import './index.css';
 
-export default function App() {
+const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges();
+
+const edgeTypes = {
+  floating: FloatingEdge,
+};
+
+const NodeAsHandleFlow = () => {
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const onConnect: OnConnect = useCallback(
-    (connection) => setEdges((edges) => addEdge(connection, edges)),
+
+  const onConnect = useCallback(
+    (params) =>
+      setEdges((eds) =>
+        addEdge({ ...params, type: 'floating', markerEnd: { type: MarkerType.Arrow } }, eds)
+      ),
     [setEdges]
   );
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      nodeTypes={nodeTypes}
-      onNodesChange={onNodesChange}
-      edges={edges}
-      edgeTypes={edgeTypes}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      fitView
-    >
-      <Background />
-      <MiniMap />
-      <Controls />
-    </ReactFlow>
+    <div className="floatingedges">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        fitView
+        edgeTypes={edgeTypes}
+        connectionLineComponent={FloatingConnectionLine}
+      >
+        <Background />
+      </ReactFlow>
+    </div>
   );
-}
+};
+
+export default NodeAsHandleFlow;
