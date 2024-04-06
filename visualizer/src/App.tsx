@@ -1,10 +1,13 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 import ReactFlow, {
   addEdge,
   Background,
   useNodesState,
   useEdgesState,
   MarkerType,
+  useReactFlow,
+  ReactFlowProvider,
+  Panel,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -14,7 +17,57 @@ import { createNodesAndEdges } from './utils.js';
 
 import './index.css';
 
+import ELK from 'elkjs/lib/elk.bundled.js';
+
 const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges();
+
+
+const elk = new ELK();
+
+// Elk has a *huge* amount of options to configure. To see everything you can
+// tweak check out:
+//
+// - https://www.eclipse.org/elk/reference/algorithms.html
+// - https://www.eclipse.org/elk/reference/options.html
+const elkOptions = {
+  'elk.algorithm': 'layered',
+  'elk.layered.spacing.nodeNodeBetweenLayers': '100',
+  'elk.spacing.nodeNode': '80',
+};
+
+const getLayoutedElements = (nodes, edges, options = {}) => {
+  const isHorizontal = options?.['elk.direction'] === 'RIGHT';
+  const graph = {
+    id: 'root',
+    layoutOptions: options,
+    children: nodes.map((node) => ({
+      ...node,
+      // Adjust the target and source handle positions based on the layout
+      // direction.
+      targetPosition: isHorizontal ? 'left' : 'top',
+      sourcePosition: isHorizontal ? 'right' : 'bottom',
+
+      // Hardcode a width and height for elk to use when layouting.
+      width: 150,
+      height: 50,
+    })),
+    edges: edges,
+  };
+
+  return elk
+    .layout(graph)
+    .then((layoutedGraph) => ({
+      nodes: layoutedGraph.children.map((node) => ({
+        ...node,
+        // React Flow expects a position property on the node instead of `x`
+        // and `y` fields.
+        position: { x: node.x, y: node.y },
+      })),
+
+      edges: layoutedGraph.edges,
+    }))
+    .catch(console.error);
+};
 
 const edgeTypes = {
   floating: FloatingEdge,
@@ -31,6 +84,7 @@ async function loadJsonAsDict() {
 const NodeAsHandleFlow = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { fitView } = useReactFlow();
 
   const onConnect = useCallback(
     (params) =>
@@ -47,7 +101,11 @@ const NodeAsHandleFlow = () => {
         const fetchedNodes = await loadJsonAsDict();
         const populatedNodes = [];
         for (const node in fetchedNodes['ios']['blocks']) {
-          populatedNodes.push({ id: node, data: { label: node }, position: center });
+          const position = {
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+          };
+          populatedNodes.push({ id: node, data: { label: node }, position: position });
         }
         // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
         setNodes(populatedNodes);
@@ -70,7 +128,28 @@ const NodeAsHandleFlow = () => {
     };
 
     updateNodesFromJson();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []);
+
+  const onLayout = useCallback(
+    ({ direction, useInitialNodes = false }) => {
+      const opts = { 'elk.direction': direction, ...elkOptions };
+      const ns = useInitialNodes ? initialNodes : nodes;
+      const es = useInitialNodes ? initialEdges : edges;
+
+      getLayoutedElements(ns, es, opts).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+
+        window.requestAnimationFrame(() => fitView());
+      });
+    },
+    [nodes, edges]
+  );
+
+  // Calculate the initial layout on mount.
+  useLayoutEffect(() => {
+    onLayout({ direction: 'DOWN', useInitialNodes: true });
+  }, []);
 
   return (
     <div className="floatingedges">
@@ -84,13 +163,24 @@ const NodeAsHandleFlow = () => {
         edgeTypes={edgeTypes}
         connectionLineComponent={FloatingConnectionLine}
       >
+        <Panel position="top-right">
+        <button onClick={() => onLayout({ direction: 'DOWN' })}>vertical layout</button>
+
+        <button onClick={() => onLayout({ direction: 'RIGHT' })}>horizontal layout</button>
+      </Panel>
         <Background />
       </ReactFlow>
     </div>
   );
 };
 
-export default NodeAsHandleFlow;
+// export default NodeAsHandleFlow;
+
+export default () => (
+  <ReactFlowProvider>
+    <NodeAsHandleFlow />
+  </ReactFlowProvider>
+);
 
 
 
