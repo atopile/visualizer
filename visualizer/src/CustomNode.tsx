@@ -1,6 +1,5 @@
 //import React, { memo } from 'react';
-import { Handle, Position } from 'reactflow';
-import type { NodeProps } from '@reactflow/core/dist/esm/types';
+import { Handle, Position, NodeProps } from 'reactflow';
 
 export const CustomNodeBlock = ({ data }: {data: NodeProps}) => {
     //TODO: is the type NodeProps?
