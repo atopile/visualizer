@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useCallback, useEffect, useLayoutEffect } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import ReactFlow, {
   addEdge,
   Background,
@@ -87,10 +87,14 @@ async function loadJsonAsDict() {
   return response.json();
 }
 
+const block_id = "root";
+
+
 const NodeAsHandleFlow = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
+  const [block_id, setBlockId] = useState("root");
 
   const onConnect = useCallback(
     (params) =>
@@ -100,11 +104,18 @@ const NodeAsHandleFlow = () => {
     [setEdges]
   );
 
+  const handleExpandClick = (newBlockId) => {
+    console.log("handling it buddy");
+    console.log(newBlockId);
+    setBlockId(newBlockId);
+  };
+
+
   useEffect(() => {
     const updateNodesFromJson = async () => {
       try {
         const fetchedNodes = await loadJsonAsDict();
-        const displayedNode = fetchedNodes['power_supply'];
+        const displayedNode = fetchedNodes[block_id];
         const populatedNodes = [];
         for (const node in displayedNode['blocks']) {
           const position = {
@@ -115,9 +126,9 @@ const NodeAsHandleFlow = () => {
           if (displayedNode['blocks'][node]['type'] == 'interface' || displayedNode['blocks'][node]['type'] == 'signal') {
             populatedNodes.push({ id: node, type: 'customCircularNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightblue' }, position: position });
           } else if (displayedNode['blocks'][node]['type'] == 'module') {
-            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightgreen' }, position: position });
+            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightgreen', handleExpandClick: handleExpandClick }, position: position });
           } else {
-            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightyellow' }, position: position });
+            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightyellow', handleExpandClick: handleExpandClick }, position: position });
           }
         }
         // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
@@ -146,6 +157,12 @@ const NodeAsHandleFlow = () => {
     };
 
     updateNodesFromJson();
+  }, []);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const param = searchParams.get('block_addr'); // Replace 'paramName' with your parameter key
+    console.log(param); // Use the parameter as needed
   }, []);
 
   const onLayout = useCallback(

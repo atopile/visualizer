@@ -1,6 +1,6 @@
 // @ts-nocheck
 //import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, Position, NodeProps, NodeToolbar } from 'reactflow';
 
 export const CustomNodeBlock = ({ data }: {data: NodeProps}) => {
     //TODO: is the type NodeProps?
@@ -21,6 +21,9 @@ export const CustomNodeBlock = ({ data }: {data: NodeProps}) => {
             position={Position.Bottom}
             style={{ top: 10, background: '#555' }}
         />
+        <NodeToolbar isVisible={data.toolbarVisible} position={data.toolbarPosition}>
+        <button onClick={() => data.handleExpandClick(data.title)}>expand</button>
+      </NodeToolbar>
         </>
     )
 };
