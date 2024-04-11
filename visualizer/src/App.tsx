@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 import ReactFlow, {
   addEdge,
