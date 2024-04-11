@@ -11,9 +11,10 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import FloatingEdge from './FloatingEdge.js';
 import FloatingConnectionLine from './FloatingConnectionLine.js';
 import { createNodesAndEdges } from './utils.js';
+import { CustomNodeBlock, CircularNodeComponent } from './CustomNode';
+import CustomEdge from './CustomEdge';
 
 import './index.css';
 
@@ -49,7 +50,7 @@ const getLayoutedElements = (nodes, edges, options = {}) => {
 
       // Hardcode a width and height for elk to use when layouting.
       width: 150,
-      height: 50,
+      height: 36,
     })),
     edges: edges,
   };
@@ -69,8 +70,13 @@ const getLayoutedElements = (nodes, edges, options = {}) => {
     .catch(console.error);
 };
 
+const nodeTypes = {
+  customNode: CustomNodeBlock, // Register your custom node type
+  customCircularNode: CircularNodeComponent
+};
+
 const edgeTypes = {
-  floating: FloatingEdge,
+  custom: CustomEdge,
 };
 
 async function loadJsonAsDict() {
@@ -89,36 +95,47 @@ const NodeAsHandleFlow = () => {
   const onConnect = useCallback(
     (params) =>
       setEdges((eds) =>
-        addEdge({ ...params, type: 'floating', markerEnd: { type: MarkerType.Arrow } }, eds)
+        addEdge({ ...params, type: 'default', markerEnd: { type: MarkerType.Arrow } }, eds)
       ),
     [setEdges]
   );
-  const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
   useEffect(() => {
     const updateNodesFromJson = async () => {
       try {
         const fetchedNodes = await loadJsonAsDict();
+        const displayedNode = fetchedNodes['ios'];
         const populatedNodes = [];
-        for (const node in fetchedNodes['ios']['blocks']) {
+        for (const node in displayedNode['blocks']) {
           const position = {
             x: Math.random() * window.innerWidth,
             y: Math.random() * window.innerHeight,
           };
-          populatedNodes.push({ id: node, data: { label: node }, position: position });
+          let style;
+          if (displayedNode['blocks'][node]['type'] == 'interface' || displayedNode['blocks'][node]['type'] == 'signal') {
+            populatedNodes.push({ id: node, type: 'customCircularNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightblue' }, position: position });
+          } else if (displayedNode['blocks'][node]['type'] == 'module') {
+            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightgreen' }, position: position });
+          } else {
+            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightyellow' }, position: position });
+          }
         }
         // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
         setNodes(populatedNodes);
         const populatedEdges = [];
-        for (const edge of fetchedNodes['ios']['links']) {
+        for (const edge of displayedNode['links']) {
           populatedEdges.push({
             id: `${edge['source']}-${edge['target']}`,
             target: edge['source'],
             source: edge['target'],
-            type: 'floating',
+            type: 'custom',
             markerEnd: {
               type: MarkerType.Arrow,
             },
+            data: {
+              source: edge['source'],
+              target: edge['target']
+            }
           });
         }
         setEdges(populatedEdges);
@@ -161,6 +178,7 @@ const NodeAsHandleFlow = () => {
         onConnect={onConnect}
         fitView
         edgeTypes={edgeTypes}
+        nodeTypes={nodeTypes}
         connectionLineComponent={FloatingConnectionLine}
       >
         <Panel position="top-right">
@@ -181,78 +199,3 @@ export default () => (
     <NodeAsHandleFlow />
   </ReactFlowProvider>
 );
-
-
-
-
-
-// import type { OnConnect } from "reactflow";
-
-// import { useCallback, useEffect } from "react";
-// import {
-//   Background,
-//   Controls,
-//   MiniMap,
-//   ReactFlow,
-//   addEdge,
-//   useNodesState,
-//   useEdgesState,
-// } from "reactflow";
-
-// import "reactflow/dist/style.css";
-
-// import { initialNodes, nodeTypes } from "./nodes";
-// import { initialEdges, edgeTypes } from "./edges";
-
-// async function loadJsonAsDict() {
-//   const response = await fetch('http://127.0.0.1:5000/data');
-//   if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//   }
-//   return response.json();
-// }
-
-// export default function App() {
-//   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-//   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-//   const onConnect: OnConnect = useCallback(
-//     (connection) => setEdges((edges) => addEdge(connection, edges)),
-//     [setEdges]
-//   );
-//   const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-
-//   useEffect(() => {
-//     const updateNodesFromJson = async () => {
-//       try {
-//         const fetchedNodes = await loadJsonAsDict();
-//         const populatedNodes = [];
-//         for (const node in fetchedNodes['ios']['blocks']) {
-//           populatedNodes.push({ id: node, data: { label: node }, position: center });
-//         }
-//         // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
-//         setNodes(populatedNodes);
-//       } catch (error) {
-//         console.error("Failed to fetch nodes:", error);
-//       }
-//     };
-
-//     updateNodesFromJson();
-//   }, []); // Empty dependency array means this effect runs once on mount
-
-//   return (
-//     <ReactFlow
-//       nodes={nodes}
-//       nodeTypes={nodeTypes}
-//       onNodesChange={onNodesChange}
-//       edges={edges}
-//       edgeTypes={edgeTypes}
-//       onEdgesChange={onEdgesChange}
-//       onConnect={onConnect}
-//       fitView
-//     >
-//       <Background />
-//       <MiniMap />
-//       <Controls />
-//     </ReactFlow>
-//   );
-// }
