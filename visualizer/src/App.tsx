@@ -11,7 +11,6 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import FloatingConnectionLine from './FloatingConnectionLine.js';
 import { createNodesAndEdges } from './utils.js';
 import { CustomNodeBlock, CircularNodeComponent } from './CustomNode';
 import CustomEdge from './CustomEdge';
@@ -180,7 +179,6 @@ const NodeAsHandleFlow = () => {
         fitView
         edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
-        connectionLineComponent={FloatingConnectionLine}
       >
         <Panel position="top-right">
         <button onClick={() => onLayout({ direction: 'DOWN' })}>vertical layout</button>
