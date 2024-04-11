@@ -12,7 +12,7 @@ import './edge_style.css';
 function EdgeLabel({ transform, label, isClicked }: { transform: string; label: string; isClicked: boolean}) {
     if (!isClicked) return null;
     return (
-      <div
+    <div
         style={{
             position: 'absolute',
             background: 'transparent',
@@ -22,23 +22,23 @@ function EdgeLabel({ transform, label, isClicked }: { transform: string; label: 
             transform,
         }}
         className="nodrag nopan edge-label"
-      >
+    >
         {label}
-      </div>
+    </div>
     );
   }
 
 export default function CustomEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  markerEnd,
-  data,
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    style = {},
+    markerEnd,
+    data,
 }: EdgeProps) {
     //const { setEdges } = useReactFlow();
     const [isClicked, setIsClicked] = useState(false);
