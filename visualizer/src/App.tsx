@@ -104,7 +104,7 @@ const NodeAsHandleFlow = () => {
     const updateNodesFromJson = async () => {
       try {
         const fetchedNodes = await loadJsonAsDict();
-        const displayedNode = fetchedNodes['ios'];
+        const displayedNode = fetchedNodes['power_supply'];
         const populatedNodes = [];
         for (const node in displayedNode['blocks']) {
           const position = {
@@ -125,16 +125,17 @@ const NodeAsHandleFlow = () => {
         const populatedEdges = [];
         for (const edge of displayedNode['links']) {
           populatedEdges.push({
-            id: `${edge['source']}-${edge['target']}`,
-            target: edge['source'],
-            source: edge['target'],
+            id: `${edge['source']['block']}-${edge['target']['block']}`,
+            source: edge['source']['block'],
+            target: edge['target']['block'],
             type: 'custom',
             markerEnd: {
               type: MarkerType.Arrow,
             },
             data: {
-              source: edge['source'],
-              target: edge['target']
+              source: edge['source']['port'],
+              target: edge['target']['port'],
+              instance_of: edge['instance_of']
             }
           });
         }

@@ -74,7 +74,7 @@ export default function CustomEdge({
           <div
           style={{
             position: 'absolute',
-            transform: `translate(-50%, 0%)translate(${labelX}px,${labelY}px)`,
+            transform: `translate(-50%, -50%)translate(${labelX}px,${labelY}px)`,
             padding: 10,
             borderRadius: 5,
             fontSize: 12,
@@ -85,7 +85,7 @@ export default function CustomEdge({
           onClick={handleClick}
         >
         <button className="edgebutton">
-          {data.target}
+          {data.instance_of}
         </button>
         </div>
       </EdgeLabelRenderer>
