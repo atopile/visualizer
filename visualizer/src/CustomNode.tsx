@@ -12,7 +12,7 @@ export const CustomNodeBlock = ({ data }: {data: NodeProps}) => {
             style={{ bottom: 10, background: '#555' }}
             onConnect={(params) => console.log('handle onConnect', params)}
         />
-        <div style={{ textAlign: 'center', padding: '10px', borderRadius: '10px', backgroundColor: data.color }}>
+        <div onClick={() => data.handleExpandClick(data.address)} style={{ textAlign: 'center', padding: '10px', borderRadius: '10px', backgroundColor: data.color }}>
             <div>{data.instance_of}</div>
             <div style={{fontWeight: 'bold'}}>{data.title}</div>
         </div>
@@ -21,9 +21,6 @@ export const CustomNodeBlock = ({ data }: {data: NodeProps}) => {
             position={Position.Bottom}
             style={{ top: 10, background: '#555' }}
         />
-        <NodeToolbar isVisible={data.toolbarVisible} position={data.toolbarPosition}>
-        <button onClick={() => data.handleExpandClick(data.title)}>expand</button>
-      </NodeToolbar>
         </>
     )
 };

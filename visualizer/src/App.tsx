@@ -88,107 +88,112 @@ async function loadJsonAsDict() {
 }
 
 const block_id = "root";
+const parent_block_addr = "none";
 
 
 const NodeAsHandleFlow = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const { fitView } = useReactFlow();
-  const [block_id, setBlockId] = useState("root");
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const { fitView } = useReactFlow();
+    const [block_id, setBlockId] = useState("root");
+    const [parent_block_addr, setParentBlockAddr] = useState("none");
 
-  const onConnect = useCallback(
+    const onConnect = useCallback(
     (params) =>
-      setEdges((eds) =>
+        setEdges((eds) =>
         addEdge({ ...params, type: 'default', markerEnd: { type: MarkerType.Arrow } }, eds)
-      ),
+        ),
     [setEdges]
-  );
+    );
 
-  const handleExpandClick = (newBlockId) => {
-    console.log("handling it buddy");
-    console.log(newBlockId);
+    const handleExpandClick = (newBlockId) => {
     setBlockId(newBlockId);
-  };
+    };
+
+    const onLayout = useCallback(
+    ({ direction, useInitialNodes = false }) => {
+        const opts = { 'elk.direction': direction, ...elkOptions };
+        const ns = useInitialNodes ? initialNodes : nodes;
+        const es = useInitialNodes ? initialEdges : edges;
+
+        getLayoutedElements(ns, es, opts).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+
+        window.requestAnimationFrame(() => fitView());
+        });
+    },
+    [nodes, edges]
+    );
 
 
-  useEffect(() => {
+    useEffect(() => {
     const updateNodesFromJson = async () => {
-      try {
+        try {
         const fetchedNodes = await loadJsonAsDict();
         const displayedNode = fetchedNodes[block_id];
+        setParentBlockAddr(displayedNode['parent']);
         const populatedNodes = [];
         for (const node in displayedNode['blocks']) {
-          const position = {
+            const position = {
             x: Math.random() * window.innerWidth,
             y: Math.random() * window.innerHeight,
-          };
-          let style;
-          if (displayedNode['blocks'][node]['type'] == 'interface' || displayedNode['blocks'][node]['type'] == 'signal') {
-            populatedNodes.push({ id: node, type: 'customCircularNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightblue' }, position: position });
-          } else if (displayedNode['blocks'][node]['type'] == 'module') {
-            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightgreen', handleExpandClick: handleExpandClick }, position: position });
-          } else {
-            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: 'lightyellow', handleExpandClick: handleExpandClick }, position: position });
-          }
+            };
+            let style;
+            if (displayedNode['blocks'][node]['type'] == 'signal') {
+            populatedNodes.push({ id: node, type: 'customCircularNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: '#8ECAE6' }, position: position });
+            } else if (displayedNode['blocks'][node]['type'] == 'interface') {
+            populatedNodes.push({ id: node, type: 'customCircularNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], color: '#219EBC' }, position: position });
+            }
+            else if (displayedNode['blocks'][node]['type'] == 'module') {
+            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], address: displayedNode['blocks'][node]['address'], color: '#FB8500', handleExpandClick: handleExpandClick }, position: position });
+            } else {
+            populatedNodes.push({ id: node, type: 'customNode', data: { title: node, instance_of: displayedNode['blocks'][node]['instance_of'], address: displayedNode['blocks'][node]['address'], color: '#FFB703', handleExpandClick: handleExpandClick }, position: position });
+            }
         }
         // Assuming fetchedNodes is an array of nodes in the format expected by React Flow
         setNodes(populatedNodes);
         const populatedEdges = [];
         for (const edge of displayedNode['links']) {
-          populatedEdges.push({
-            id: `${edge['source']['block']}-${edge['target']['block']}`,
+            populatedEdges.push({
+            id: `${edge['source']['block']}${edge['source']['port']}-${edge['target']['block']}${edge['target']['port']}`,
             source: edge['source']['block'],
             target: edge['target']['block'],
             type: 'custom',
             markerEnd: {
-              type: MarkerType.Arrow,
+                type: MarkerType.Arrow,
             },
             data: {
-              source: edge['source']['port'],
-              target: edge['target']['port'],
-              instance_of: edge['instance_of']
+                source: edge['source']['port'],
+                target: edge['target']['port'],
+                instance_of: edge['instance_of']
             }
-          });
+            });
         }
         setEdges(populatedEdges);
-      } catch (error) {
+        } catch (error) {
         console.error("Failed to fetch nodes:", error);
-      }
+        }
     };
 
     updateNodesFromJson();
-  }, []);
+    }, [block_id]);
 
-  useEffect(() => {
+    useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const param = searchParams.get('block_addr'); // Replace 'paramName' with your parameter key
     console.log(param); // Use the parameter as needed
-  }, []);
+    }, []);
 
-  const onLayout = useCallback(
-    ({ direction, useInitialNodes = false }) => {
-      const opts = { 'elk.direction': direction, ...elkOptions };
-      const ns = useInitialNodes ? initialNodes : nodes;
-      const es = useInitialNodes ? initialEdges : edges;
+    // Calculate the initial layout on mount.
+    useLayoutEffect(() => {
+    onLayout({ direction: 'DOWN' });
+    }, [edges]);
 
-      getLayoutedElements(ns, es, opts).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-
-        window.requestAnimationFrame(() => fitView());
-      });
-    },
-    [nodes, edges]
-  );
-
-  // Calculate the initial layout on mount.
-  useLayoutEffect(() => {
-    onLayout({ direction: 'DOWN', useInitialNodes: true });
-  }, []);
-
-  return (
+    return (
     <div className="floatingedges">
-      <ReactFlow
+        <ReactFlow
+        key={block_id}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -197,16 +202,18 @@ const NodeAsHandleFlow = () => {
         fitView
         edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
-      >
+        >
         <Panel position="top-right">
-        <button onClick={() => onLayout({ direction: 'DOWN' })}>vertical layout</button>
-
-        <button onClick={() => onLayout({ direction: 'RIGHT' })}>horizontal layout</button>
-      </Panel>
+            <div style={{backgroundColor: 'lightgray', border: '2px solid grey', margin: '10px', padding: '10px', borderRadius: '10px'}}>
+                <div><i>Inspecting:</i> <b>{block_id}</b></div>
+                <div><i>Parent:</i> {parent_block_addr}</div>
+                <button onClick={() => handleExpandClick(parent_block_addr)}>return</button>
+            </div>
+        </Panel>
         <Background />
-      </ReactFlow>
+        </ReactFlow>
     </div>
-  );
+    );
 };
 
 // export default NodeAsHandleFlow;
