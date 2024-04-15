@@ -80,7 +80,7 @@ const edgeTypes = {
 };
 
 async function loadJsonAsDict() {
-  const response = await fetch('http://127.0.0.1:5000/data');
+  const response = await fetch('http://127.0.0.1:8080/data');
   if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -203,7 +203,7 @@ const NodeAsHandleFlow = () => {
         edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
         >
-        <Panel position="top-right">
+        <Panel position="top-left">
             <div style={{backgroundColor: 'lightgray', border: '2px solid grey', margin: '10px', padding: '10px', borderRadius: '10px'}}>
                 <div><i>Inspecting:</i> <b>{block_id}</b></div>
                 <div><i>Parent:</i> {parent_block_addr}</div>
